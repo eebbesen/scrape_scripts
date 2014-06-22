@@ -1,12 +1,17 @@
 require 'net/http'
-require 'net/https'
 require 'pry'
 
 # This requires a USPS Web Tools account: https://www.usps.com/business/web-tools-apis/welcome.htm
 # This also requires the special permission on the account to call ZipCodeLookup: 
 #  "contact our Internet Customer Care Center (uspstechnicalsupport@mailps.custhelp.com) and 
 #           include "Web Tools API Access" in the subject line. An agent will be happy to assist you."
+
+# The USPS API calls seem to be more sensitive than Google's -- many addresses in the Minneapolis list
+# were not resolved by USPS whereas Google got all of them that were not 'none'
+
 usps_api_user_id = ARGV[0]
+city = ARGV[1].dup
+state= ARGV[2]
 
 # Minneapolis city parks
 street_addresses = ['28 University Ave. SE',
@@ -206,13 +211,19 @@ http = Net::HTTP.new('production.shippingapis.com')
 
 street_addresses.each do |street_address|
   path = '/ShippingAPITest.dll'
-  data = "API=ZipCodeLookup&XML=<ZipCodeLookupRequest%20USERID=\"#{usps_api_user_id}\"><Address ID=\"0\"><Address1></Address1><Address2>#{street_address}</Address2><City>Minneapolis</City><State>MN</State></Address></ZipCodeLookupRequest>"
+  data = "API=ZipCodeLookup&XML=<ZipCodeLookupRequest%20USERID=\"#{usps_api_user_id}\"><Address ID=\"0\"><Address1></Address1><Address2>#{street_address}</Address2><City>#{city}</City><State>#{state}</State></Address></ZipCodeLookupRequest>"
   
-  resp, payload = http.post(path, data, nil)
+  resp, payload = http.post(path, data)
 
-  puts 'Code = ' + resp.code
-  puts 'Message = ' + resp.message
+  # puts 'Code = ' + resp.code
+  # puts 'Message = ' + resp.message
 
-  puts resp.body
-
+  zip = /<Zip5>[0-9]*<\/Zip5>/.match(resp.body).to_s
+  if zip.nil? 
+    puts "Error!: #{resp.body}"
+  elsif zip.empty?
+    puts "Empty: #{resp.body}"
+  else 
+    puts zip.gsub("<Zip5>",'').gsub("<\/Zip5>",'')
+  end
 end

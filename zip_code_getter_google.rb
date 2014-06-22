@@ -1,11 +1,16 @@
 require 'net/http'
-require 'net/https'
-require 'pry'
-require 'rubygems'
 require 'json'
 
+# BEWARE!: Google will try to resolve your address and may return an odd result without notifying you
+#          so please do some spot checking.  For example, an address with an unescaped ampersand(&)
+#          returned an address in Cambodia when I was really looking for one in Brooklyn Park, MN.
+
 # This requires a Google API key: https://developers.google.com/maps/documentation/geocoding/
+# call like this:
+# $ ruby ./zip_code_getter_google.com <your_google_api_key> 'Saint Paul' MN
 api_key = ARGV[0]
+city = ARGV[1].dup
+state= ARGV[2]
 
 # Minneapolis city parks
 street_addresses = ['28 University Ave. SE',
@@ -200,13 +205,15 @@ street_addresses = ['28 University Ave. SE',
 '2251 Hayes St. NE',
 '5821 Wentworth Ave. S']
 
+# frozen
+city.gsub!(' ','+')
+
 street_addresses.each do |street_address|
   street_address.gsub!(' ','+')
 
-  uri = URI("https://maps.googleapis.com/maps/api/geocode/json?address=#{street_address},+Minneapolis,+MN&key=#{api_key}")
+  uri = URI("https://maps.googleapis.com/maps/api/geocode/json?address=#{street_address},+#{city},+#{state}&key=#{api_key}")
 
-  Net::HTTP.start(uri.host, uri.port,
-  :use_ssl => uri.scheme == 'https') do |http|
+  Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https') do |http|
     request = Net::HTTP::Get.new uri
 
     response = http.request request
