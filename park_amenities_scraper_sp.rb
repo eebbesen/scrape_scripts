@@ -39,9 +39,9 @@ urls = ['/facilities.aspx?&pagenum=2',
 
 # Get park-specific URIs
 park_uris = []
-(urls).each do |url|
+(urls).each do |uri|
 
-  doc = Nokogiri::HTML(open("#{SPG_URI}#{url}"))
+  doc = Nokogiri::HTML(open("#{SPG_URI}#{uri}"))
 
   park_uris << doc.xpath("//tbody/tr[contains(@class, 'ft_results')]/td[contains(@class, 'ft_resultrow')]/a/@href")
 end
@@ -52,6 +52,20 @@ park_uris.each { |uri|
   s_park_uris << uri.value
 }
 
-puts "#{s_park_uris}"
+# puts "#{s_park_uris}"
 
 # Scrape pages for each park
+s_park_uris.each { |uri| 
+  doc = Nokogiri::HTML(open("#{SPG_URI}#{uri}"))
+
+  # park name
+  park_name = ''
+  
+  # address parts
+  address_parts = doc.xpath("//table[contains(@class, 'ftdetail_tbl')]/tr/td[contains(@class, 'r')]/text()")
+  street_address = address_parts[0]
+  city_state_zip = address_parts[1]
+  zip = /[0-9]{5}/.match(city_state_zip).to_s
+
+  puts "#{uri}~#{park_name}~#{street_address}~#{zip}"
+}
