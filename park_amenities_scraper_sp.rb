@@ -59,7 +59,7 @@ s_park_uris.each { |uri|
   doc = Nokogiri::HTML(open("#{SPG_URI}#{uri}"))
 
   # park name
-  park_name = ''
+  park_name = doc.xpath("//span[contains(@class, 'ftdetail_name')]/text()")
   
   # address parts
   address_parts = doc.xpath("//table[contains(@class, 'ftdetail_tbl')]/tr/td[contains(@class, 'r')]/text()")
